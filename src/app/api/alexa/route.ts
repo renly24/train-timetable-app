@@ -92,7 +92,7 @@ export async function POST(request: Request): Promise<Response> {
   const intentName: string = envelope?.request?.intent?.name ?? ''
 
   const now = new Date()
-  const departures = getUpcomingDepartures(DEFAULT_STATION_ID, DEFAULT_WALKING_MINUTES, now, 3)
+  const departures = await getUpcomingDepartures(DEFAULT_STATION_ID, DEFAULT_WALKING_MINUTES, now, 3)
 
   if (requestType === 'LaunchRequest' || intentName === 'GetNextTrainsIntent') {
     return alexaResponse(speechForNextTrains(departures))

@@ -15,7 +15,7 @@ export async function GET(request: Request): Promise<Response> {
   const now = new Date()
 
   try {
-    const departures = getUpcomingDepartures(stationId, walkingMinutes, now, limit)
+    const departures = await getUpcomingDepartures(stationId, walkingMinutes, now, limit)
 
     const body: DeparturesResponse = {
       stationId,

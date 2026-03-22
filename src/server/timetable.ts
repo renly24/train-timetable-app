@@ -1,7 +1,5 @@
 import 'server-only'
 
-import fs from 'fs'
-import path from 'path'
 import type { TrainDeparture } from '@/types/timetable'
 
 type DayType = 'weekday' | 'holiday'
@@ -41,11 +39,24 @@ export function getDayType(utcDate: Date): DayType {
   return dayOfWeek === 0 || dayOfWeek === 6 ? 'holiday' : 'weekday'
 }
 
-/** CSV を読み込んでパースする */
-function loadCSV(stationId: string): CsvRow[] {
-  const filePath = path.join(process.cwd(), 'data', `${stationId}.csv`)
-  const content = fs.readFileSync(filePath, 'utf-8')
+/** Vercel Blob から CSV を取得してパースする */
+async function loadCSV(stationId: string): Promise<CsvRow[]> {
+  const baseUrl = process.env.BLOB_BASE_URL
+  if (!baseUrl) throw new Error('BLOB_BASE_URL is not set')
 
+  const url = `${baseUrl}/${stationId}.csv`
+  const res = await fetch(url, { cache: 'no-store' })
+
+  if (res.status === 404) {
+    const err = new Error(`Station data not found: "${stationId}"`) as NodeJS.ErrnoException
+    err.code = 'ENOENT'
+    throw err
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to fetch timetable: ${res.status} ${res.statusText}`)
+  }
+
+  const content = await res.text()
   const lines = content.split('\n').filter((l) => l.trim())
   const [, ...rows] = lines // ヘッダー行をスキップ
 
@@ -62,24 +73,24 @@ function loadCSV(stationId: string): CsvRow[] {
 /**
  * 徒歩時間を考慮して乗れる直近の電車を返す
  *
- * @param stationId      CSV ファイル ID（data/{stationId}.csv）
+ * @param stationId      CSV ファイル ID（Blob 上のファイル名）
  * @param walkingMinutes 自宅から駅までの徒歩時間（分）
  * @param utcNow         現在時刻（UTC）
  * @param limit          取得件数（デフォルト 3）
  */
-export function getUpcomingDepartures(
+export async function getUpcomingDepartures(
   stationId: string,
   walkingMinutes: number,
   utcNow: Date,
   limit = 3,
-): TrainDeparture[] {
+): Promise<TrainDeparture[]> {
   const dayType = getDayType(utcNow)
   const { hours, minutes } = toJST(utcNow)
 
   const nowTotalMinutes = hours * 60 + minutes
   const catchableFromMinutes = nowTotalMinutes + walkingMinutes
 
-  const rows = loadCSV(stationId)
+  const rows = await loadCSV(stationId)
   const results: TrainDeparture[] = []
 
   for (const row of rows) {
