@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import pdfplumber; print\\(''pdfplumber ok''\\)\")",
+      "Bash(python -c \"import pypdf; print\\(''pypdf ok''\\)\")",
+      "Bash(python -c \"import pdfminer; print\\(''pdfminer ok''\\)\")",
+      "Bash(pip install:*)",
+      "Bash(npx tsc:*)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_wait_for",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_type",
+      "Bash(curl -s \"http://localhost:3000/api/admin/search?name=%E5%B9%B3%E5%A1%9A\")",
+      "mcp__playwright__browser_evaluate",
+      "Bash(curl -s -X POST \"http://localhost:3000/api/admin/import\" -H \"Content-Type: application/json\" -d '{\"\"stationId\"\":\"\"1337010\"\",\"\"weekdayUrl\"\":\"\"https://timetables.jreast.co.jp/2604/timetable/tt1337/1337010.html\"\",\"\"holidayUrl\"\":\"\"https://timetables.jreast.co.jp/2604/timetable/tt1337/1337011.html\"\"}')",
+      "Bash(node -e \"const v = require\\(''alexa-verifier''\\); console.log\\(typeof v\\); console.log\\(Object.keys\\(v\\)\\)\")",
+      "Bash(node -e \"const v = require\\(''alexa-verifier''\\); console.log\\(typeof v.default\\)\")",
+      "Bash(npm run:*)"
+    ]
+  }
+}

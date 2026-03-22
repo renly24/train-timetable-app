@@ -1,0 +1,3 @@
+[      49ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://timetables.jreast.co.jp/2604/:0
+[      63ms] [ERROR] Refused to apply style from 'https://timetables.jreast.co.jp/2604/timetable/css/style.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ https://timetables.jreast.co.jp/2604/:0
+[     339ms] [ERROR] Refused to apply style from 'https://timetables.jreast.co.jp/2604/timetable/css/style.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ https://timetables.jreast.co.jp/2604/:0
