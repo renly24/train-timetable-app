@@ -1,11 +1,9 @@
 import 'server-only'
 
-import { writeFile } from 'fs/promises'
-import path from 'path'
+import { put } from '@vercel/blob'
 import type { TimetableOption, StationSearchResult } from '@/types/timetable'
 
 const BASE_URL = 'https://timetables.jreast.co.jp'
-const DATA_DIR = path.join(process.cwd(), 'data')
 
 const FETCH_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (compatible; TimetableImporter/1.0)',
@@ -301,8 +299,13 @@ export async function scrapeAndSaveCsv(
     csvLines.push(`${time},${destination},${dayType}`)
   }
 
-  const outPath = path.join(DATA_DIR, `${stationId}.csv`)
-  await writeFile(outPath, csvLines.join('\n') + '\n', 'utf-8')
+  const csvContent = csvLines.join('\n') + '\n'
+
+  await put(`${stationId}.csv`, csvContent, {
+    access: 'public',
+    contentType: 'text/csv',
+    allowOverwrite: true,
+  })
 
   return { weekdayCount: weekdayRows.length, holidayCount: holidayRows.length }
 }
