@@ -7,7 +7,7 @@ const STORAGE_KEY = 'train-station-settings'
 
 const DEFAULT_STATIONS: StationConfig[] = [
   {
-    id: 'hiratsuka-tokaido-inbound',
+    id: '1337020',
     label: '平塚 東海道線 上り',
     walkingMinutes: 10,
   },
