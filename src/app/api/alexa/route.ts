@@ -75,11 +75,13 @@ export async function POST(request: Request): Promise<Response> {
   const signature = request.headers.get('signature') ?? ''
   const rawBody = await request.text()
 
-  // Alexa リクエスト署名検証
-  try {
-    await verify(certUrl, signature, rawBody)
-  } catch {
-    return new Response('Forbidden', { status: 403 })
+  // Alexa リクエスト署名検証（SKIP_ALEXA_VERIFICATION=true で無効化可能）
+  if (process.env.SKIP_ALEXA_VERIFICATION !== 'true') {
+    try {
+      await verify(certUrl, signature, rawBody)
+    } catch {
+      return new Response('Forbidden', { status: 403 })
+    }
   }
 
   if (!DEFAULT_STATION_ID) {
