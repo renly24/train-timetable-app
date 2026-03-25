@@ -16,7 +16,17 @@
       "Bash(node -e \"const v = require\\(''alexa-verifier''\\); console.log\\(typeof v\\); console.log\\(Object.keys\\(v\\)\\)\")",
       "Bash(node -e \"const v = require\\(''alexa-verifier''\\); console.log\\(typeof v.default\\)\")",
       "Bash(npm run:*)",
-      "Bash(npx vercel:*)"
+      "Bash(npx vercel:*)",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_select_option",
+      "mcp__playwright__browser_press_key",
+      "Bash(ask deploy:*)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__claude_ai_Vercel__get_runtime_logs",
+      "Bash(ask smapi:*)",
+      "Bash(curl -s -I https://train-timetable-app.vercel.app/api/alexa -X POST)",
+      "mcp__playwright__browser_network_requests",
+      "WebFetch(domain:traininfo.jreast.co.jp)"
     ]
   }
 }
