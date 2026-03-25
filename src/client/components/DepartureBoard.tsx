@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { DeparturesResponse, StationConfig } from '@/types/timetable'
+import type { DeparturesResponse, StationConfig, TrainStatus } from '@/types/timetable'
 import DepartureCard from './DepartureCard'
 
 interface Props {
@@ -23,6 +23,7 @@ export default function DepartureBoard({ station }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [now, setNow] = useState(() => new Date())
+  const [trainStatus, setTrainStatus] = useState<TrainStatus | null>(null)
 
   const fetchDepartures = useCallback(async () => {
     setError(null)
@@ -57,8 +58,38 @@ export default function DepartureBoard({ station }: Props) {
     return () => clearInterval(ticker)
   }, [])
 
+  // 運行状況を5分ごとに取得
+  useEffect(() => {
+    if (!station.lineId) return
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch(`/api/train-status?lineid=${encodeURIComponent(station.lineId!)}`)
+        if (res.ok) setTrainStatus(await res.json())
+      } catch {
+        // 取得失敗は無視（表示しないだけ）
+      }
+    }
+    fetchStatus()
+    const interval = setInterval(fetchStatus, 5 * 60_000)
+    return () => clearInterval(interval)
+  }, [station.lineId])
+
   return (
     <div className="space-y-3">
+      {/* 運行状況バッジ */}
+      {trainStatus && (
+        <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+          trainStatus.isNormal
+            ? 'bg-green-50 text-green-700'
+            : 'bg-red-50 text-red-700'
+        }`}>
+          <span className="font-semibold">{trainStatus.status}</span>
+          {trainStatus.updatedAt && (
+            <span className="ml-auto text-xs opacity-60">{trainStatus.updatedAt}</span>
+          )}
+        </div>
+      )}
+
       {/* サブヘッダー：徒歩時間・最終更新 */}
       <div className="flex items-center justify-between text-sm text-slate-500">
         <span>徒歩 {station.walkingMinutes} 分</span>

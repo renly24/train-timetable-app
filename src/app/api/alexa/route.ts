@@ -1,19 +1,12 @@
 import { getUpcomingDepartures } from '@/server/timetable'
 import type { TrainDeparture } from '@/types/timetable'
-import { promisify } from 'util'
-import alexaVerifier from 'alexa-verifier'
 
-const verify = promisify(
-  alexaVerifier as (
-    certUrl: string,
-    signature: string,
-    body: string,
-    cb: (err: Error | null) => void,
-  ) => void,
-)
+export const runtime = 'edge'
 
 const DEFAULT_STATION_ID = process.env.ALEXA_STATION_ID ?? ''
 const DEFAULT_WALKING_MINUTES = Number(process.env.ALEXA_WALKING_MINUTES ?? '10')
+
+const REPROMPT_TEXT = '他に聞きたいことはありますか？'
 
 /** "HH:MM" → "14時40分" のような読み上げ用テキストに変換 */
 function formatTime(hhMM: string): string {
@@ -61,56 +54,61 @@ function speechForTimeRemaining(departures: TrainDeparture[]): string {
 
 /** Alexa JSON レスポンスを生成 */
 function alexaResponse(text: string, shouldEndSession = true): Response {
-  return Response.json({
-    version: '1.0',
-    response: {
-      outputSpeech: { type: 'PlainText', text },
-      shouldEndSession,
-    },
-  })
+  const response: Record<string, unknown> = {
+    outputSpeech: { type: 'PlainText', text },
+    shouldEndSession,
+  }
+  if (!shouldEndSession) {
+    response.reprompt = { outputSpeech: { type: 'PlainText', text: REPROMPT_TEXT } }
+  }
+  return Response.json({ version: '1.0', response })
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const certUrl = request.headers.get('signaturecertchainurl') ?? ''
-  const signature = request.headers.get('signature') ?? ''
   const rawBody = await request.text()
-
-  // Alexa リクエスト署名検証（SKIP_ALEXA_VERIFICATION=true で無効化可能）
-  if (process.env.SKIP_ALEXA_VERIFICATION !== 'true') {
-    try {
-      await verify(certUrl, signature, rawBody)
-    } catch {
-      return new Response('Forbidden', { status: 403 })
-    }
-  }
 
   if (!DEFAULT_STATION_ID) {
     return alexaResponse('駅の設定がされていません。管理者に環境変数の設定を依頼してください。')
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const envelope = JSON.parse(rawBody) as any
+  let envelope: any
+  try {
+    envelope = JSON.parse(rawBody)
+  } catch {
+    return new Response('Bad Request', { status: 400 })
+  }
+
   const requestType: string = envelope?.request?.type ?? ''
   const intentName: string = envelope?.request?.intent?.name ?? ''
-
-  const now = new Date()
-  const departures = await getUpcomingDepartures(DEFAULT_STATION_ID, DEFAULT_WALKING_MINUTES, now, 3)
-
-  if (requestType === 'LaunchRequest' || intentName === 'GetNextTrainsIntent') {
-    return alexaResponse(speechForNextTrains(departures))
-  }
-
-  if (intentName === 'GetNextSingleTrainIntent') {
-    return alexaResponse(speechForNextSingle(departures))
-  }
-
-  if (intentName === 'GetTimeRemainingIntent') {
-    return alexaResponse(speechForTimeRemaining(departures))
-  }
 
   if (requestType === 'SessionEndedRequest') {
     return Response.json({ version: '1.0', response: {} })
   }
 
-  return alexaResponse('すみません、よく聞き取れませんでした。もう一度お願いします。')
+  let departures: TrainDeparture[]
+  try {
+    departures = await getUpcomingDepartures(DEFAULT_STATION_ID, DEFAULT_WALKING_MINUTES, new Date(), 3)
+  } catch (err) {
+    console.error('[alexa] getUpcomingDepartures failed:', err)
+    return alexaResponse('申し訳ありません、時刻表の取得に失敗しました。しばらくしてからもう一度お試しください。')
+  }
+
+  if (requestType === 'LaunchRequest') {
+    return alexaResponse(speechForNextTrains(departures))
+  }
+
+  if (intentName === 'GetNextTrainsIntent') {
+    return alexaResponse(speechForNextTrains(departures), false)
+  }
+
+  if (intentName === 'GetNextSingleTrainIntent') {
+    return alexaResponse(speechForNextSingle(departures), false)
+  }
+
+  if (intentName === 'GetTimeRemainingIntent') {
+    return alexaResponse(speechForTimeRemaining(departures), false)
+  }
+
+  return alexaResponse('すみません、よく聞き取れませんでした。もう一度お願いします。', false)
 }
