@@ -1,4 +1,5 @@
 import { getUpcomingDepartures } from '@/server/timetable'
+import { getRecentAlerts, buildDelayAlertSpeech } from '@/server/delayAlerts'
 import type { TrainDeparture } from '@/types/timetable'
 
 export const runtime = 'edge'
@@ -94,20 +95,23 @@ export async function POST(request: Request): Promise<Response> {
     return alexaResponse('申し訳ありません、時刻表の取得に失敗しました。しばらくしてからもう一度お試しください。')
   }
 
+  const alerts = await getRecentAlerts().catch(() => [])
+  const delaySpeech = buildDelayAlertSpeech(alerts)
+
   if (requestType === 'LaunchRequest') {
-    return alexaResponse(speechForNextTrains(departures))
+    return alexaResponse(delaySpeech + speechForNextTrains(departures))
   }
 
   if (intentName === 'GetNextTrainsIntent') {
-    return alexaResponse(speechForNextTrains(departures), false)
+    return alexaResponse(delaySpeech + speechForNextTrains(departures), false)
   }
 
   if (intentName === 'GetNextSingleTrainIntent') {
-    return alexaResponse(speechForNextSingle(departures), false)
+    return alexaResponse(delaySpeech + speechForNextSingle(departures), false)
   }
 
   if (intentName === 'GetTimeRemainingIntent') {
-    return alexaResponse(speechForTimeRemaining(departures), false)
+    return alexaResponse(delaySpeech + speechForTimeRemaining(departures), false)
   }
 
   return alexaResponse('すみません、よく聞き取れませんでした。もう一度お願いします。', false)

@@ -12,7 +12,8 @@ export async function GET(request: Request): Promise<Response> {
     const status = await fetchLineStatus(lineid.trim())
     return Response.json(status)
   } catch (err) {
-    console.error('[/api/train-status]', err)
-    return Response.json({ error: 'Failed to fetch train status' }, { status: 500 })
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[/api/train-status]', message)
+    return Response.json({ error: message }, { status: 500 })
   }
 }
