@@ -1,5 +1,4 @@
 import { scrapeAndSaveCsv } from '@/server/scrapeJrEast'
-import { resolveLineid } from '@/server/trainInfo'
 
 export async function POST(request: Request): Promise<Response> {
   const body = await request.json().catch(() => null)
@@ -7,11 +6,10 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'リクエストボディが不正です' }, { status: 400 })
   }
 
-  const { stationId, weekdayUrl, holidayUrl, line } = body as {
+  const { stationId, weekdayUrl, holidayUrl } = body as {
     stationId?: string
     weekdayUrl?: string
     holidayUrl?: string
-    line?: string
   }
 
   if (!stationId?.trim()) {
@@ -25,16 +23,12 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const [{ weekdayCount, holidayCount }, lineId] = await Promise.all([
-      scrapeAndSaveCsv(weekdayUrl.trim(), holidayUrl.trim(), stationId.trim()),
-      line?.trim() ? resolveLineid(line.trim()).catch(() => null) : Promise.resolve(null),
-    ])
+    const { weekdayCount, holidayCount } = await scrapeAndSaveCsv(weekdayUrl.trim(), holidayUrl.trim(), stationId.trim())
     return Response.json({
       success: true,
       stationId: stationId.trim(),
       weekdayCount,
       holidayCount,
-      lineId: lineId ?? undefined,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : '不明なエラーが発生しました'
