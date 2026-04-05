@@ -10,7 +10,6 @@ const DEFAULT_STATIONS: StationConfig[] = [
     id: '1337020',
     label: '平塚 東海道線 上り',
     walkingMinutes: 10,
-    lineId: 'tokaidoline',
   },
 ]
 
@@ -25,15 +24,8 @@ export function useStationSettings() {
       if (saved) {
         const parsed: unknown = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // マイグレーション: lineId が未設定の駅にデフォルト値から補完する
-          const defaultById = new Map(DEFAULT_STATIONS.map((s) => [s.id, s]))
-          const migrated = (parsed as StationConfig[]).map((s) =>
-            !s.lineId && defaultById.has(s.id)
-              ? { ...s, lineId: defaultById.get(s.id)!.lineId }
-              : s,
-          )
-          setStations(migrated)
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated))
+          setStations(parsed as StationConfig[])
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed))
         }
       }
     } catch {

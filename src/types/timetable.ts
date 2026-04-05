@@ -18,14 +18,6 @@ export type StationConfig = {
   id: string              // CSV ファイル ID（data/{id}.csv）
   label: string           // 表示名（例: "平塚 東海道線 上り"）
   walkingMinutes: number  // 自宅から駅までの徒歩時間（分）
-  lineId?: string         // JR東日本 運行情報の lineid（例: "tokaidoline"）
-}
-
-/** GET /api/train-status のレスポンス */
-export type TrainStatus = {
-  status: string       // 例: "平常運転", "遅延", "運転見合わせ"
-  isNormal: boolean
-  updatedAt: string | null
 }
 
 /** GET /api/departures のレスポンス */

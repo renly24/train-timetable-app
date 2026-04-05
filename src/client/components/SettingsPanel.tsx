@@ -112,17 +112,15 @@ export default function SettingsPanel({ stations, onAdd, onRemove, onUpdate, onC
           stationId: importId.trim(),
           weekdayUrl: selected.option.weekdayUrl,
           holidayUrl: selected.option.holidayUrl,
-          line: selected.option.line,
         }),
       })
-      const data = await res.json() as { success?: boolean; error?: string; lineId?: string }
+      const data = await res.json() as { success?: boolean; error?: string }
       if (!res.ok || !data.success) throw new Error(data.error ?? `HTTP ${res.status}`)
 
       onAdd({
         id: importId.trim(),
         label: importLabel.trim(),
         walkingMinutes: minutes,
-        lineId: data.lineId,
       })
       setImportStatus('success')
       setSelected(null)
